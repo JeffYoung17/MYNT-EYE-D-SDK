@@ -39,6 +39,8 @@
 
 #include "mynteyed/camera.h"
 #include "mynteyed/utils.h"
+#include "mynteyed/filter/spatial_filter.h"
+#include "mynteyed/filter/temporal_filter.h"
 
 #include "pointcloud_generator.h" // NOLINT
 
@@ -121,6 +123,9 @@ class MYNTEYEWrapperNodelet : public nodelet::Nodelet {
   std::string imu_frame_id;
   std::string temp_frame_id;
   std::string imu_frame_processed_id;
+
+  SpatialFilter spat_filter;
+  TemporalFilter temp_filter;
 
   // MYNTEYE objects
   OpenParams params;
@@ -646,6 +651,8 @@ class MYNTEYEWrapperNodelet : public nodelet::Nodelet {
     if (info) info->header.stamp = header.stamp;
     if (info) info->header.frame_id = depth_frame_id;
     if (params.depth_mode == DepthMode::DEPTH_RAW) {
+      spat_filter.ProcessFrame(data.img, data.img);
+      temp_filter.ProcessFrame(data.img, data.img);
       auto&& mat = data.img->To(ImageFormat::DEPTH_RAW)->ToMat();
       if (depth_type == 0) {
         pub_depth.publish(
